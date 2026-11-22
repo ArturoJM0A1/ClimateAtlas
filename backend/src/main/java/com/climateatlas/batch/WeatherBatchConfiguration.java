@@ -5,13 +5,13 @@ import com.climateatlas.domain.WeatherReading;
 import com.climateatlas.repository.CityRepository;
 import com.climateatlas.repository.WeatherReadingRepository;
 import com.climateatlas.service.OpenMeteoClient;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.data.RepositoryItemReader;
-import org.springframework.batch.item.data.RepositoryItemReaderBuilder;
+import org.springframework.batch.infrastructure.item.data.RepositoryItemReader;
+import org.springframework.batch.infrastructure.item.data.builder.RepositoryItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,7 +57,8 @@ public class WeatherBatchConfiguration {
             WeatherItemWriter weatherItemWriter,
             @Value("${climate.weather.batch-chunk-size:5}") int chunkSize) {
         return new StepBuilder("weatherRefreshStep", jobRepository)
-                .<City, WeatherReading>chunk(chunkSize, transactionManager)
+                .<City, WeatherReading>chunk(chunkSize)
+                .transactionManager(transactionManager)
                 .reader(enabledCityReader)
                 .processor(weatherItemProcessor)
                 .writer(weatherItemWriter)
