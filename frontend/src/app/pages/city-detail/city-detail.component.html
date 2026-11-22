@@ -1,0 +1,54 @@
+<a class="back-link" routerLink="/">← Volver al dashboard</a>
+
+<section *ngIf="city as currentCity" class="detail-heading">
+  <div>
+    <p class="eyebrow">DETALLE DE CIUDAD</p>
+    <h1>{{ currentCity.name }}</h1>
+    <p>{{ currentCity.state }} · {{ currentCity.latitude }}, {{ currentCity.longitude }}</p>
+  </div>
+  <div class="current-reading" *ngIf="currentCity.currentWeather as weather">
+    <strong>{{ weather.temperature | number:'1.1-1' }} °C</strong>
+    <span>Temperatura registrada</span>
+  </div>
+</section>
+
+<p class="notice error" *ngIf="error">{{ error }}</p>
+
+<section class="history-panel">
+  <div class="panel-heading">
+    <div>
+      <h2>Historial de temperatura</h2>
+      <p>Las mediciones proceden de SQLite y se acumulan desde las ejecuciones del sistema.</p>
+    </div>
+  </div>
+
+  <div class="date-filters">
+    <label>Desde <input type="date" [(ngModel)]="fromDate"></label>
+    <label>Hasta <input type="date" [(ngModel)]="toDate"></label>
+    <button type="button" (click)="loadHistory()" [disabled]="loading">Aplicar fechas</button>
+  </div>
+
+  <p class="loading" *ngIf="loading">Consultando lecturas…</p>
+  <p class="empty-state" *ngIf="!loading && readings.length === 0">
+    No hay lecturas para el periodo seleccionado. Ejecuta una actualización y vuelve a consultar.
+  </p>
+  <app-weather-chart *ngIf="readings.length > 0" [readings]="readings"></app-weather-chart>
+</section>
+
+<section class="readings-panel" *ngIf="readings.length > 0">
+  <h2>Lecturas</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Medición</th><th>Temperatura</th><th>Humedad</th><th>Viento</th><th>Consulta</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let reading of readings">
+          <td>{{ reading.measuredAt | date:'medium' }}</td>
+          <td>{{ reading.temperature | number:'1.1-1' }} °C</td>
+          <td>{{ reading.humidity | number:'1.0-0' }} %</td>
+          <td>{{ reading.windSpeed | number:'1.1-1' }} km/h</td>
+          <td>{{ reading.queriedAt | date:'short' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

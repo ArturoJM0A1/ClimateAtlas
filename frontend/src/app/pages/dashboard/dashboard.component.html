@@ -1,0 +1,73 @@
+<section class="dashboard-heading">
+  <div>
+    <p class="eyebrow">MÉXICO · TIEMPO ACTUAL</p>
+    <h1>Atlas meteorológico</h1>
+    <p class="intro">Consulta las condiciones registradas de las ciudades y explora su distribución geográfica.</p>
+  </div>
+  <button class="refresh-button" type="button" (click)="refreshNow()" [disabled]="refreshing">
+    {{ refreshing ? 'Actualizando…' : 'Actualizar ahora' }}
+  </button>
+</section>
+
+<p class="notice error" *ngIf="error$ | async as error">{{ error }}</p>
+<p class="notice" *ngIf="refreshMessage">{{ refreshMessage }}</p>
+
+<section class="statistics" *ngIf="statistics$ | async as statistics">
+  <article class="stat-card">
+    <span>Ciudades</span>
+    <strong>{{ statistics.totalCities }}</strong>
+  </article>
+  <article class="stat-card">
+    <span>Habilitadas</span>
+    <strong>{{ statistics.enabledCities }}</strong>
+  </article>
+  <article class="stat-card">
+    <span>Lecturas guardadas</span>
+    <strong>{{ statistics.totalReadings }}</strong>
+  </article>
+  <article class="stat-card">
+    <span>Temperatura media actual</span>
+    <strong>{{ statistics.averageCurrentTemperature === null ? '—' : (statistics.averageCurrentTemperature | number:'1.1-1') + ' °C' }}</strong>
+  </article>
+</section>
+
+<app-weather-filters
+  (queryChanged)="updateQuery($event)"
+  (enabledOnlyChanged)="updateEnabledOnly($event)">
+</app-weather-filters>
+
+<div class="loading" *ngIf="loading$ | async">Cargando ciudades…</div>
+
+<ng-container *ngIf="filteredCities$ | async as cities">
+  <section class="workspace">
+    <div class="map-panel">
+      <div class="section-heading">
+        <h2>Mapa</h2>
+        <span>Selecciona un marcador para ver la ciudad</span>
+      </div>
+      <app-weather-map [cities]="cities" (citySelected)="selectCity($event)"></app-weather-map>
+    </div>
+
+    <aside class="list-panel">
+      <app-city-list
+        [cities]="cities"
+        [selectedCityId]="(selectedCity$ | async)?.id ?? null"
+        (citySelected)="selectCity($event)">
+      </app-city-list>
+    </aside>
+  </section>
+
+  <section class="selected-panel" *ngIf="selectedCity$ | async as selected">
+    <div>
+      <p class="eyebrow">CIUDAD SELECCIONADA</p>
+      <h2>{{ selected.name }}, {{ selected.state }}</h2>
+      <p *ngIf="selected.currentWeather as weather">
+        {{ weather.temperature | number:'1.1-1' }} °C · Humedad
+        {{ weather.humidity | number:'1.0-0' }} % · Viento
+        {{ weather.windSpeed | number:'1.1-1' }} km/h
+      </p>
+      <p *ngIf="!selected.currentWeather">Todavía no hay una lectura guardada para esta ciudad.</p>
+    </div>
+    <a [routerLink]="['/cities', selected.id]">Consultar historial</a>
+  </section>
+</ng-container>
