@@ -33,9 +33,8 @@ public class CityEntity {
     @OneToMany(mappedBy = "city", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<WeatherReadingEntity> readings = new ArrayList<>();
 
-    protected CityEntity() {
-        // Constructor requerido por JPA.
-    }
+    /** Constructor público requerido por JPA y por el adaptador de persistencia. */
+    public CityEntity() {}
 
     public void updateFrom(String name, String state, Double latitude,
                            Double longitude, Boolean enabled) {

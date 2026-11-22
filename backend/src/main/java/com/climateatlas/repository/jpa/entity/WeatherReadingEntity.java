@@ -37,9 +37,8 @@ public class WeatherReadingEntity {
     @Column(name = "queried_at", nullable = false)
     private LocalDateTime queriedAt;
 
-    protected WeatherReadingEntity() {
-        // Constructor requerido por JPA.
-    }
+    /** Constructor público requerido por JPA y por el adaptador de persistencia. */
+    public WeatherReadingEntity() {}
 
     public void updateFrom(CityEntity city, Double temperature, Double humidity,
                            Double windSpeed, LocalDateTime measuredAt, LocalDateTime queriedAt) {
