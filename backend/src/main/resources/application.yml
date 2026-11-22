@@ -1,0 +1,41 @@
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+
+spring:
+  application:
+    name: climateatlas-api
+  datasource:
+    url: jdbc:sqlite:${CLIMATE_DB_PATH:./data/climateatlas.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      connection-init-sql: PRAGMA foreign_keys=ON
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+      database-type: SQLITE
+      schema: classpath:org/springframework/batch/core/schema-sqlite.sql
+
+logging:
+  level:
+    com.climateatlas: INFO
+    org.springframework.batch: INFO
+
+climate:
+  weather:
+    fixed-delay-ms: ${WEATHER_REFRESH_DELAY_MS:3600000}
+    initial-delay-ms: ${WEATHER_INITIAL_DELAY_MS:15000}
+    batch-chunk-size: ${WEATHER_BATCH_CHUNK_SIZE:5}
