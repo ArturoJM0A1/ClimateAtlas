@@ -5,14 +5,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * Punto de entrada. @SpringBootApplication activa la configuración automática
- * y el escaneo de componentes. @EnableScheduling registra los métodos
- * anotados con @Scheduled.
+ * Bootstrap del backend.
+ *
+ * Se mantiene en el paquete raíz para que Spring Boot descubra automáticamente
+ * los componentes, entidades JPA y repositorios de las capas app, negocio y repository.
  */
 @SpringBootApplication
 @EnableScheduling
 public class ClimateAtlasApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(ClimateAtlasApplication.class, args);
     }

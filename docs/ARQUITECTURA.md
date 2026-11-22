@@ -1,121 +1,97 @@
 # Arquitectura de ClimateAtlas
 
-## 1. Vista general
+## 1. Capas del backend
 
-ClimateAtlas se divide en dos procesos independientes:
-
-- **Backend**: API REST Java con Spring Boot. Integra SQLite, Open-Meteo, Spring Batch y Spring Scheduling.
-- **Frontend**: aplicación Angular. Consulta la API, dibuja el mapa y representa el historial.
-
-El navegador no consulta Open-Meteo directamente. Toda lectura meteorológica pasa por el backend para mantener la persistencia y la regla de unicidad en un solo lugar.
+ClimateAtlas utiliza una arquitectura de tres capas: `app`, `negocio` y `repository`.
 
 ```text
-┌──────────────────────────────┐
-│ Angular                      │
-│ Dashboard / mapa / historial │
-│ Router / HttpClient / RxJS   │
-└──────────────┬───────────────┘
-               │ HTTP /api
-               ▼
-┌──────────────────────────────┐
-│ Spring Boot                  │
-│ Controllers → Services       │
-│       → Spring Data JPA      │
-│       → Hibernate            │
-└──────────────┬───────────────┘
-               │ JDBC
-               ▼
-        ┌────────────────┐
-        │ SQLite         │
-        │ cities         │
-        │ weather_readings│
-        │ BATCH_*        │
-        └────────────────┘
-
-Spring Scheduling ──inicia──> Spring Batch Job
-                                  │
-                           Reader / Processor
-                                  │
-                            Open-Meteo HTTP
-                                  │
-                                Writer
-                                  │
-                                SQLite
+┌──────────────────────────────────────────────────┐
+│ APP                                              │
+│ Controllers · DTO · Application Services        │
+│ Configuración · Spring Batch · Scheduling      │
+└──────────────────────┬───────────────────────────┘
+                       │ invoca casos de uso
+                       ▼
+┌──────────────────────────────────────────────────┐
+│ NEGOCIO                                          │
+│ Modelos puros · Servicios · Reglas              │
+│ Puertos: CityRepository, WeatherProvider, etc.  │
+└──────────────────────┬───────────────────────────┘
+                       ▲ implementa puertos
+                       │
+┌──────────────────────┴───────────────────────────┐
+│ REPOSITORY                                       │
+│ Adaptadores JPA · Spring Data · SQLite           │
+│ Adaptador HTTP de Open-Meteo                     │
+└──────────────────────────────────────────────────┘
 ```
 
-## 2. Backend por responsabilidades
+### app — aplicación
 
-| Capa | Paquete | Responsabilidad |
-|---|---|---|
-| Web | `web` | Recibir HTTP, leer parámetros y devolver DTO. |
-| Servicio | `service` | Coordinar reglas de negocio y consultas. |
-| Persistencia | `repository` | Consultas derivadas y CRUD JPA. |
-| Modelo | `domain` | Entidades que Hibernate almacena. |
-| Contratos HTTP | `dto` | Tipos de entrada y salida de la API. |
-| Batch | `batch` | Reader, Processor, Writer, Job y Step. |
-| Configuración | `config` | Cliente HTTP, CORS y ciudades iniciales. |
-| Errores | `exception` | Excepciones de dominio y respuestas de error. |
+- `app.web`: controladores REST.
+- `app.dto`: contratos JSON de entrada y salida.
+- `app.application`: coordinación de casos de uso y conversión de modelos a DTO.
+- `app.batch`: Job, Step, Reader, Processor, Writer, servicio de inicio y scheduler.
+- `app.config`: composición de dependencias, CORS y datos iniciales.
+- `app.exception`: traducción de errores a HTTP.
 
-Los controladores no construyen SQL ni llaman directamente a Open-Meteo. Los repositorios no deciden códigos HTTP.
+Los controladores no ejecutan SQL ni contienen reglas de dominio.
 
-## 3. Flujo: Angular → API
+### negocio — dominio y reglas
 
-1. Angular Router selecciona Dashboard o CityDetail.
-2. El componente llama a un servicio Angular.
-3. El servicio utiliza HttpClient y devuelve un Observable.
-4. El componente o el servicio de estado consume ese Observable.
-5. La solicitud llega a un controlador Spring MVC.
-6. Spring valida el DTO y entrega el trabajo al servicio.
-7. El servicio consulta el repositorio.
-8. El controlador devuelve DTO como JSON.
+- `negocio.model`: modelos Java puros `City`, `WeatherReading` y `WeatherStatistics`.
+- `negocio.service`: reglas del catálogo, historial y estadísticas.
+- `negocio.port`: contratos que negocio necesita para persistir y consultar clima.
+- `negocio.exception`: excepciones del dominio.
 
-En desarrollo, `frontend/proxy.conf.json` reenvía `/api` a `http://localhost:8080`.
+Negocio no importa Spring, Hibernate, Jakarta Persistence, entidades JPA ni DTO HTTP.
 
-## 4. Flujo: Open-Meteo → SQLite
+### repository — persistencia e integraciones
 
-1. `WeatherUpdateScheduler` se activa según `climate.weather.fixed-delay-ms`.
-2. El scheduler llama a `WeatherJobService.start()`.
-3. `JobOperator` inicia `weatherRefreshJob` con un parámetro identificador.
-4. `enabledCityReader` pagina las ciudades habilitadas desde `CityRepository`.
-5. `WeatherItemProcessor` solicita temperatura, humedad relativa, viento y hora de medición.
-6. `OpenMeteoClient` llama a `https://api.open-meteo.com/v1/forecast`.
-7. Jackson convierte el JSON a records Java.
-8. El Processor crea un `WeatherReading`. Si el proveedor falla para una ciudad, registra el error y devuelve null para filtrar ese elemento.
-9. `WeatherItemWriter` busca la combinación ciudad + fecha. Actualiza la fila si ya existe o crea una nueva.
-10. La clave UNIQUE de SQLite impide duplicados aunque dos escrituras coincidan.
+- `repository.jpa.entity`: entidades de base de datos.
+- `repository.jpa`: interfaces Spring Data.
+- `repository`: adaptadores que implementan los puertos y traducen modelos a entidades.
+- `repository.openmeteo`: adaptador HTTP que implementa `WeatherProvider`.
 
-La escritura se agrupa en chunks. El tamaño del bloque se configura mediante `WEATHER_BATCH_CHUNK_SIZE`.
+La tecnología SQLite, las consultas JPA y RestClient quedan aisladas aquí.
 
-## 5. Scheduling y Batch tienen responsabilidades distintas
+## 2. Regla de dependencias
 
-**Spring Scheduling** responde “¿cuándo se inicia?”. El método `@Scheduled` invoca el servicio que arranca el Job.
+```text
+app ───────────────> negocio
+repository ────────> negocio
+app configura repository como implementación de los puertos
+negocio ───────────> no depende de app ni repository
+```
 
-**Spring Batch** responde “¿cómo se procesa el conjunto?”. Administra Reader → Processor → Writer, chunks, estados y metadatos.
+## 3. Flujo REST
 
-El endpoint `POST /api/weather/refresh` inicia el mismo Job manualmente. No existe una segunda implementación de la lógica meteorológica.
+1. Angular envía una petición a `/api`.
+2. `app.web` recibe la ruta y valida DTO.
+3. `app.application` coordina el caso de uso.
+4. `negocio.service` ejecuta las reglas.
+5. El servicio usa interfaces definidas en `negocio.port`.
+6. Un adaptador de `repository` traduce el modelo a JPA y ejecuta la consulta.
+7. App transforma el resultado a DTO y el controlador devuelve JSON.
 
-## 6. SQLite
+## 4. Flujo Spring Batch
 
-El archivo predeterminado está en `backend/data/climateatlas.db`. Hibernate gestiona `cities` y `weather_readings`; Spring Batch inicializa sus tablas de metadatos `BATCH_*` en el mismo archivo.
+1. `WeatherUpdateScheduler` inicia el Job periódicamente.
+2. `WeatherJobService` llama a `JobOperator`.
+3. `EnabledCityItemReader` consulta el puerto `CityRepository`.
+4. `WeatherItemProcessor` invoca `WeatherProvider`.
+5. `OpenMeteoWeatherProvider` consulta Open-Meteo y traduce su JSON a `WeatherData`.
+6. El Processor crea un modelo `WeatherReading`.
+7. `WeatherItemWriter` usa el puerto `WeatherReadingRepository`.
+8. El adaptador JPA guarda la lectura en SQLite.
+9. JobRepository JDBC registra instancias, ejecuciones y checkpoints en las tablas `BATCH_*`.
 
-La aplicación usa `org.hibernate.community.dialect.SQLiteDialect` y el driver JDBC de Xerial. Las claves foráneas se activan en cada conexión.
+## 5. Modelos y entidades
 
-La carpeta `backend/data` se versiona solo mediante `.gitkeep`; la base de datos está excluida con `.gitignore`.
+`negocio.model.City` expresa la ciudad dentro del dominio. `repository.jpa.entity.CityEntity` expresa su representación persistente. El adaptador traduce entre ambas.
 
-## 7. Angular y estado
+El mismo criterio se aplica a WeatherReading. Cambiar Hibernate o SQLite no obliga a modificar las reglas de negocio.
 
-`DashboardStateService` contiene Subjects privados y publica observables de solo lectura: `cities$`, `selectedCity$`, `loading$` y `error$`.
+## 6. Verificación
 
-El Dashboard combina el Observable de ciudades con los cambios de búsqueda y filtro. Los hijos reciben datos mediante Inputs y notifican selección mediante Outputs.
-
-Flujo de selección:
-
-`CityList / WeatherMap → EventEmitter → Dashboard → DashboardStateService → BehaviorSubject → componentes suscritos`.
-
-## 8. Límites actuales
-
-- El historial empieza a acumularse al ejecutar el Job. No se genera histórico ficticio.
-- Las lecturas dependen de Open-Meteo y la conexión de red.
-- El mapa usa mosaicos públicos de OpenStreetMap y requiere Internet.
-- La API no incorpora autenticación; está pensada para aprendizaje local.
-- Se configuran timeouts HTTP, pero no reintentos automáticos.
+GitHub Actions ejecuta build, pruebas unitarias, prueba de arranque con SQLite y compilación de Angular. Las consultas meteorológicas en vivo dependen de Open-Meteo.
