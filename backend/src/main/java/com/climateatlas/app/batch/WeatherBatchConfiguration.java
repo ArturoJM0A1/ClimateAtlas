@@ -20,22 +20,34 @@ import org.springframework.transaction.PlatformTransactionManager;
 /** Definición del Job; Reader, Processor y Writer usan tipos de negocio. */
 @Configuration
 public class WeatherBatchConfiguration {
+    /**
+     * Declara el Reader como bean de Spring y con alcance Step. El objeto se crea en el contexto de ejecución del Step y recibe el puerto de ciudades habilitadas.
+     */
     @Bean
     @StepScope
     public EnabledCityItemReader enabledCityReader(CityRepository cityRepository) {
         return new EnabledCityItemReader(cityRepository);
     }
 
+    /**
+     * Declara el Processor que convierte una ciudad en una medición consultando el puerto WeatherProvider.
+     */
     @Bean
     public WeatherItemProcessor weatherItemProcessor(WeatherProvider weatherProvider) {
         return new WeatherItemProcessor(weatherProvider);
     }
 
+    /**
+     * Declara el Writer que guardará las mediciones mediante el puerto de persistencia del dominio.
+     */
     @Bean
     public WeatherItemWriter weatherItemWriter(WeatherReadingRepository repository) {
         return new WeatherItemWriter(repository);
     }
 
+    /**
+     * Construye el Step por bloques (chunks). Lee ciudades, las procesa y escribe mediciones; cada bloque se confirma dentro de una transacción. chunkSize controla cuántos elementos se agrupan antes de escribir.
+     */
     @Bean
     public Step weatherRefreshStep(
             JobRepository jobRepository,
@@ -53,6 +65,9 @@ public class WeatherBatchConfiguration {
                 .build();
     }
 
+    /**
+     * Define el Job y establece que su flujo comienza ejecutando weatherRefreshStep.
+     */
     @Bean
     public Job weatherRefreshJob(JobRepository jobRepository, Step weatherRefreshStep) {
         return new JobBuilder("weatherRefreshJob", jobRepository)

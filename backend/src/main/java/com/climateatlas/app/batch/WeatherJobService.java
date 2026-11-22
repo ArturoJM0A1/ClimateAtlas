@@ -16,6 +16,9 @@ public class WeatherJobService {
     private final JobOperator jobOperator;
     private final Job weatherRefreshJob;
 
+    /**
+     * Constructor: recibe el operador de Spring Batch y el Job concreto que debe ejecutar.
+     */
     public WeatherJobService(
             JobOperator jobOperator,
             @Qualifier("weatherRefreshJob") Job weatherRefreshJob) {
@@ -23,6 +26,9 @@ public class WeatherJobService {
         this.weatherRefreshJob = weatherRefreshJob;
     }
 
+    /**
+     * Crea un parámetro requestedAt único para identificar cada ejecución y permitir volver a lanzar el Job. Inicia el trabajo y transforma su estado en JobExecutionResponse; si Batch no puede iniciarlo, convierte el fallo en una excepción de proveedor.
+     */
     public JobExecutionResponse start() {
         JobParameters parameters = new JobParametersBuilder()
                 .addLong("requestedAt", System.currentTimeMillis())

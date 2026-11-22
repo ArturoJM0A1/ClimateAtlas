@@ -23,6 +23,9 @@ public class CityController {
     private final CityApplicationService cityApplicationService;
     private final WeatherApplicationService weatherApplicationService;
 
+    /**
+     * Constructor: recibe los servicios de aplicación. El controlador no implementa reglas de negocio ni accede directamente a repositorios.
+     */
     public CityController(
             CityApplicationService cityApplicationService,
             WeatherApplicationService weatherApplicationService) {
@@ -30,16 +33,25 @@ public class CityController {
         this.weatherApplicationService = weatherApplicationService;
     }
 
+    /**
+     * Atiende GET /api/cities y devuelve el catálogo de ciudades en formato de respuesta.
+     */
     @GetMapping
     public List<CityResponse> findAll() {
         return cityApplicationService.findAll();
     }
 
+    /**
+     * Atiende GET /api/cities/{id} y devuelve la ciudad identificada por la variable de ruta.
+     */
     @GetMapping("/{id}")
     public CityResponse findById(@PathVariable Long id) {
         return cityApplicationService.findById(id);
     }
 
+    /**
+     * Atiende POST /api/cities. Valida el cuerpo, crea la ciudad y responde HTTP 201 Created; la cabecera Location señala la URL del recurso creado.
+     */
     @PostMapping
     public ResponseEntity<CityResponse> create(@Valid @RequestBody CityRequest request) {
         CityResponse created = cityApplicationService.create(request);
@@ -48,23 +60,35 @@ public class CityController {
         return ResponseEntity.created(location).body(created);
     }
 
+    /**
+     * Atiende PUT /api/cities/{id}. Reemplaza los datos editables de la ciudad usando el DTO validado.
+     */
     @PutMapping("/{id}")
     public CityResponse update(@PathVariable Long id, @Valid @RequestBody CityRequest request) {
         return cityApplicationService.update(id, request);
     }
 
+    /**
+     * Atiende PATCH /api/cities/{id}/enabled y modifica solo el indicador enabled.
+     */
     @PatchMapping("/{id}/enabled")
     public CityResponse updateEnabled(
             @PathVariable Long id, @Valid @RequestBody EnabledRequest request) {
         return cityApplicationService.updateEnabled(id, request.enabled());
     }
 
+    /**
+     * Atiende DELETE /api/cities/{id}. Elimina el recurso y responde HTTP 204 No Content cuando la operación termina correctamente.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         cityApplicationService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Atiende la consulta del historial meteorológico de una ciudad. Si no se envían fechas, utiliza por defecto los últimos siete días; si solo se envía un límite, calcula el otro.
+     */
     @GetMapping("/{id}/weather/history")
     public List<WeatherReadingResponse> history(
             @PathVariable Long id,

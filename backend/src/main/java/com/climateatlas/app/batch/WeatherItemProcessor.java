@@ -15,10 +15,16 @@ public class WeatherItemProcessor implements ItemProcessor<City, WeatherReading>
     private static final Logger LOGGER = LoggerFactory.getLogger(WeatherItemProcessor.class);
     private final WeatherProvider weatherProvider;
 
+    /**
+     * Constructor: recibe el puerto WeatherProvider para consultar datos sin acoplar el procesamiento al cliente HTTP de Open-Meteo.
+     */
     public WeatherItemProcessor(WeatherProvider weatherProvider) {
         this.weatherProvider = weatherProvider;
     }
 
+    /**
+     * Recibe una ciudad y solicita su clima actual. Con la respuesta construye WeatherReading, registrando cuándo se midió el dato y cuándo se consultó. Si falla el proveedor, registra el error y devuelve null para que Batch omita esa ciudad.
+     */
     @Override
     public WeatherReading process(City city) {
         try {

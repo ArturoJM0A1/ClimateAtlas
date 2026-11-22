@@ -12,10 +12,16 @@ import java.util.List;
 public class WeatherItemWriter implements ItemWriter<WeatherReading> {
     private final WeatherReadingRepository repository;
 
+    /**
+     * Constructor: recibe el puerto WeatherReadingRepository; el Writer desconoce las entidades JPA y la base de datos concreta.
+     */
     public WeatherItemWriter(WeatherReadingRepository repository) {
         this.repository = repository;
     }
 
+    /**
+     * Procesa el bloque recibido. Busca si ya existe una medición para la misma ciudad y hora de medición: si existe actualiza sus valores; si no, agrega una nueva. Al final persiste el conjunto para evitar duplicados.
+     */
     @Override
     public void write(Chunk<? extends WeatherReading> chunk) {
         List<WeatherReading> readingsToSave = new ArrayList<>();

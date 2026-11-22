@@ -1,18 +1,24 @@
+# Puerto HTTP del backend; puede cambiarse mediante la variable SERVER_PORT.
 server:
   port: ${SERVER_PORT:8080}
   error:
     include-message: never
 
+# Configuración principal de Spring Boot y de la persistencia.
 spring:
   application:
     name: climateatlas-api
+  # SQLite se guarda en un archivo local; CLIMATE_DB_PATH permite cambiar su ubicación.
   datasource:
     url: jdbc:sqlite:${CLIMATE_DB_PATH:./data/climateatlas.db}
     driver-class-name: org.sqlite.JDBC
+    # Activa las claves foráneas en cada conexión SQLite.
     hikari:
       connection-init-sql: PRAGMA foreign_keys=ON
+  # Hibernate convierte entidades Java en operaciones SQL.
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
+    # update ajusta el esquema al modelo JPA sin recrear los datos existentes.
     hibernate:
       ddl-auto: update
     open-in-view: false
@@ -21,7 +27,9 @@ spring:
         format_sql: true
         jdbc:
           time_zone: UTC
+  # Spring Batch guarda el estado de sus Jobs y Steps en tablas propias.
   batch:
+    # Desactiva el inicio automático: el Job se lanza desde el endpoint o el scheduler.
     job:
       enabled: false
     jdbc:
@@ -29,13 +37,18 @@ spring:
       database-type: SQLITE
       schema: classpath:org/springframework/batch/core/schema-sqlite.sql
 
+# Nivel de detalle de los registros de la aplicación y de Spring Batch.
 logging:
   level:
     com.climateatlas: INFO
     org.springframework.batch: INFO
 
+# Parámetros propios del proceso de actualización meteorológica.
 climate:
   weather:
+    # Tiempo entre el final de una ejecución y el siguiente disparo programado.
     fixed-delay-ms: ${WEATHER_REFRESH_DELAY_MS:3600000}
+    # Espera antes de ejecutar por primera vez el scheduler tras arrancar.
     initial-delay-ms: ${WEATHER_INITIAL_DELAY_MS:15000}
+    # Número de ciudades procesadas por bloque antes de confirmar la transacción.
     batch-chunk-size: ${WEATHER_BATCH_CHUNK_SIZE:5}

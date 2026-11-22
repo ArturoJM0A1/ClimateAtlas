@@ -16,6 +16,9 @@ class ClimateAtlasApplicationTest {
     @Autowired
     private CityRepository cityRepository;
 
+    /**
+     * Verifica la integración completa del contexto Spring. Comprueba que arranque la aplicación de prueba y que el inicializador haya guardado al menos siete ciudades en SQLite.
+     */
     @Test
     void contextStartsAndSeedsInitialCitiesInSqlite() {
         assertTrue(cityRepository.count() >= 7,

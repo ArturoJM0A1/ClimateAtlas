@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 /** Carga las ciudades de muestra usando el servicio de negocio, sin conocer JPA. */
 @Configuration
 public class InitialCitiesConfiguration {
+    /**
+     * Crea un inicializador que Spring ejecuta al arrancar. Si el catálogo ya contiene ciudades no hace nada; si está vacío registra las siete ciudades de muestra usando CityService, de modo que no depende de JPA.
+     */
     @Bean
     public CommandLineRunner seedInitialCities(CityService cityService) {
         return args -> {

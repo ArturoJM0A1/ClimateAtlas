@@ -22,6 +22,9 @@ class CityServiceTest {
     @InjectMocks
     private CityService cityService;
 
+    /**
+     * Comprueba la regla de negocio que impide registrar dos ciudades con el mismo nombre y estado.
+     */
     @Test
     void createRejectsADuplicateCity() {
         when(cityRepository.existsByNameAndState("Pachuca", "Hidalgo")).thenReturn(true);
@@ -29,6 +32,9 @@ class CityServiceTest {
                 () -> cityService.create("Pachuca", "Hidalgo", 20.10, -98.75));
     }
 
+    /**
+     * Comprueba que buscar un identificador inexistente produzca ResourceNotFoundException.
+     */
     @Test
     void findByIdRejectsAnUnknownCity() {
         when(cityRepository.findById(999L)).thenReturn(Optional.empty());

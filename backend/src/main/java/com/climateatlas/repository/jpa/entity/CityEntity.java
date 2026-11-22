@@ -34,8 +34,14 @@ public class CityEntity {
     private List<WeatherReadingEntity> readings = new ArrayList<>();
 
     /** Constructor público requerido por JPA y por el adaptador de persistencia. */
+    /**
+     * Constructor sin argumentos requerido por JPA para materializar objetos desde la base de datos.
+     */
     public CityEntity() {}
 
+    /**
+     * Copia los atributos del modelo de negocio a esta entidad persistente. No asigna el id porque lo administra la base de datos.
+     */
     public void updateFrom(String name, String state, Double latitude,
                            Double longitude, Boolean enabled) {
         this.name = name;
@@ -45,11 +51,32 @@ public class CityEntity {
         this.enabled = enabled;
     }
 
+    /**
+     * Devuelve la clave primaria generada para la ciudad.
+     */
     public Long getId() { return id; }
+    /**
+     * Devuelve el nombre almacenado en la columna name.
+     */
     public String getName() { return name; }
+    /**
+     * Devuelve el estado almacenado en la columna state.
+     */
     public String getState() { return state; }
+    /**
+     * Devuelve la latitud persistida.
+     */
     public Double getLatitude() { return latitude; }
+    /**
+     * Devuelve la longitud persistida.
+     */
     public Double getLongitude() { return longitude; }
+    /**
+     * Devuelve el indicador de habilitación persistido.
+     */
     public Boolean getEnabled() { return enabled; }
+    /**
+     * Devuelve la colección de mediciones asociadas. La relación está controlada por el atributo city de WeatherReadingEntity.
+     */
     public List<WeatherReadingEntity> getReadings() { return readings; }
 }

@@ -13,6 +13,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 public class ClimateAtlasApplication {
+    /**
+     * Punto de entrada del backend. SpringApplication crea el contenedor de dependencias, carga la configuración y pone en marcha el servidor HTTP.
+     */
     public static void main(String[] args) {
         SpringApplication.run(ClimateAtlasApplication.class, args);
     }

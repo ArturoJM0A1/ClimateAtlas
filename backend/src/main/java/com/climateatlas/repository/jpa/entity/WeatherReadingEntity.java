@@ -38,8 +38,14 @@ public class WeatherReadingEntity {
     private LocalDateTime queriedAt;
 
     /** Constructor público requerido por JPA y por el adaptador de persistencia. */
+    /**
+     * Constructor sin argumentos requerido por JPA para crear la entidad al leerla de la base de datos.
+     */
     public WeatherReadingEntity() {}
 
+    /**
+     * Asigna la ciudad relacionada y los valores meteorológicos a la entidad. Se reutiliza tanto al insertar como al actualizar una medición.
+     */
     public void updateFrom(CityEntity city, Double temperature, Double humidity,
                            Double windSpeed, LocalDateTime measuredAt, LocalDateTime queriedAt) {
         this.city = city;
@@ -50,11 +56,32 @@ public class WeatherReadingEntity {
         this.queriedAt = queriedAt;
     }
 
+    /**
+     * Devuelve la clave primaria de la medición.
+     */
     public Long getId() { return id; }
+    /**
+     * Devuelve la entidad CityEntity asociada mediante la clave foránea city_id.
+     */
     public CityEntity getCity() { return city; }
+    /**
+     * Devuelve la temperatura persistida.
+     */
     public Double getTemperature() { return temperature; }
+    /**
+     * Devuelve la humedad relativa persistida.
+     */
     public Double getHumidity() { return humidity; }
+    /**
+     * Devuelve la velocidad del viento persistida.
+     */
     public Double getWindSpeed() { return windSpeed; }
+    /**
+     * Devuelve el instante al que corresponde la observación meteorológica.
+     */
     public LocalDateTime getMeasuredAt() { return measuredAt; }
+    /**
+     * Devuelve el instante en que ClimateAtlas consultó al proveedor.
+     */
     public LocalDateTime getQueriedAt() { return queriedAt; }
 }

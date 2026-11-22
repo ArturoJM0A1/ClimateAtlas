@@ -19,16 +19,25 @@ public class EnabledCityItemReader implements ItemStreamReader<City> {
     private List<City> cities = List.of();
     private int currentIndex;
 
+    /**
+     * Constructor: recibe el puerto CityRepository. Así, el Reader obtiene ciudades sin conocer Spring Data ni SQLite.
+     */
     public EnabledCityItemReader(CityRepository cityRepository) {
         this.cityRepository = cityRepository;
     }
 
+    /**
+     * Se ejecuta al abrir el Step. Carga las ciudades habilitadas y recupera del ExecutionContext el índice guardado en un checkpoint para poder reanudar.
+     */
     @Override
     public void open(ExecutionContext context) throws ItemStreamException {
         cities = cityRepository.findEnabled();
         currentIndex = context.getInt(CURRENT_INDEX_KEY, 0);
     }
 
+    /**
+     * Entrega la siguiente ciudad de la lista. Devuelve null cuando ya no quedan elementos, señal que indica a Spring Batch que terminó la lectura.
+     */
     @Override
     public City read() {
         if (currentIndex >= cities.size()) {
@@ -37,11 +46,17 @@ public class EnabledCityItemReader implements ItemStreamReader<City> {
         return cities.get(currentIndex++);
     }
 
+    /**
+     * Guarda el índice actual en ExecutionContext. Spring Batch utiliza este dato para continuar desde el punto correcto si el Step se reinicia.
+     */
     @Override
     public void update(ExecutionContext context) throws ItemStreamException {
         context.putInt(CURRENT_INDEX_KEY, currentIndex);
     }
 
+    /**
+     * Libera la lista cargada y restablece el índice al cerrar el Reader.
+     */
     @Override
     public void close() throws ItemStreamException {
         cities = List.of();

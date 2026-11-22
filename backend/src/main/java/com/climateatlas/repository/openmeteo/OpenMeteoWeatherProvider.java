@@ -16,10 +16,20 @@ import java.time.LocalDateTime;
 public class OpenMeteoWeatherProvider implements WeatherProvider {
     private final RestClient restClient;
 
+    /**
+     * Recibe el RestClient configurado para Open-Meteo. Reutiliza sus tiempos
+     * de espera y su URL base en cada consulta.
+     */
     public OpenMeteoWeatherProvider(RestClient openMeteoRestClient) {
         this.restClient = openMeteoRestClient;
     }
 
+    /**
+     * Construye una petición GET al endpoint forecast usando las coordenadas de
+     * la ciudad y solicita temperatura, humedad relativa y viento actuales.
+     * Verifica que la respuesta contenga todos los campos y traduce los fallos
+     * HTTP o de formato a WeatherProviderException.
+     */
     @Override
     public WeatherData fetchCurrentWeather(City city) {
         try {
@@ -54,7 +64,19 @@ public class OpenMeteoWeatherProvider implements WeatherProvider {
         }
     }
 
+    /**
+     * Estructura mínima del JSON devuelto por el endpoint de Open-Meteo.
+     * @param current Objeto anidado con las variables meteorológicas actuales.
+     */
     public record OpenMeteoResponse(OpenMeteoCurrent current) {}
+    /**
+     * Mapeo de las propiedades actuales del JSON externo a tipos Java.
+     * Los nombres coinciden con los campos entregados por Open-Meteo.
+     * @param time Hora de medición del proveedor.
+     * @param temperature_2m Temperatura a dos metros de altura.
+     * @param relative_humidity_2m Humedad relativa expresada como entero porcentual.
+     * @param wind_speed_10m Velocidad del viento a diez metros de altura.
+     */
     public record OpenMeteoCurrent(String time, Double temperature_2m,
                                    Integer relative_humidity_2m, Double wind_speed_10m) {}
 }

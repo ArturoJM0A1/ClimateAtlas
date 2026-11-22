@@ -17,11 +17,17 @@ public class WeatherService {
     private final CityRepository cityRepository;
     private final WeatherReadingRepository readingRepository;
 
+    /**
+     * Constructor: recibe los puertos de ciudades y mediciones. Con ellos puede verificar la existencia de ciudades y consultar datos sin depender de persistencia concreta.
+     */
     public WeatherService(CityRepository cityRepository, WeatherReadingRepository readingRepository) {
         this.cityRepository = cityRepository;
         this.readingRepository = readingRepository;
     }
 
+    /**
+     * Comprueba que la ciudad exista y después devuelve su medición más reciente, si hay alguna.
+     */
     public Optional<WeatherReading> latestReading(Long cityId) {
         if (!cityRepository.existsById(cityId)) {
             throw new ResourceNotFoundException("No existe la ciudad con id " + cityId);
@@ -29,6 +35,9 @@ public class WeatherService {
         return readingRepository.findLatestByCityId(cityId);
     }
 
+    /**
+     * Valida que exista la ciudad y que from no sea posterior a to. Si el intervalo es correcto, delega la consulta del historial al repositorio.
+     */
     public List<WeatherReading> history(Long cityId, LocalDateTime from, LocalDateTime to) {
         if (!cityRepository.existsById(cityId)) {
             throw new ResourceNotFoundException("No existe la ciudad con id " + cityId);
@@ -40,6 +49,9 @@ public class WeatherService {
         return readingRepository.findHistoryByCityId(cityId, from, to);
     }
 
+    /**
+     * Consulta las ciudades, obtiene la última lectura de cada una y calcula el promedio de sus temperaturas. También devuelve el total de ciudades, las habilitadas y las lecturas almacenadas; el promedio es null si no hay lecturas.
+     */
     public WeatherStatistics statistics() {
         List<City> cities = cityRepository.findAllOrderByName();
         OptionalDouble average = cities.stream()

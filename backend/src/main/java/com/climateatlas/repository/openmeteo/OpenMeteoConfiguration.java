@@ -10,6 +10,9 @@ import java.time.Duration;
 /** Configuración HTTP interna del adaptador Open-Meteo. */
 @Configuration
 public class OpenMeteoConfiguration {
+    /**
+     * Construye el cliente HTTP que utilizará el adaptador Open-Meteo. Define la URL base, un máximo de cinco segundos para conectar y diez segundos para recibir la respuesta.
+     */
     @Bean
     public RestClient openMeteoRestClient() {
         HttpClient httpClient = HttpClient.newBuilder()
