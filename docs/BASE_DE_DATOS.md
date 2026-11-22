@@ -4,7 +4,7 @@
 
 La conexión predeterminada utiliza `backend/data/climateatlas.db`. No hace falta instalar un servidor: Xerial JDBC abre el archivo.
 
-Hibernate usa `spring.jpa.hibernate.ddl-auto=update` para crear o actualizar las tablas de entidades. Spring Batch inicializa sus tablas de metadatos con el script SQLite incluido en su dependencia.
+Hibernate usa `spring.jpa.hibernate.ddl-auto=update` para crear o actualizar las tablas de entidades. El starter `spring-boot-starter-batch-jdbc` habilita el JobRepository JDBC; Spring Boot inicializa las tablas de metadatos de Spring Batch en el mismo DataSource SQLite.
 
 ## Tabla cities
 
@@ -74,9 +74,9 @@ CREATE INDEX idx_weather_city_measured_at
     ON weather_readings(city_id, measured_at);
 ```
 
-## Metadatos Spring Batch
+## Metadatos persistidos de Spring Batch
 
-En el mismo archivo SQLite, Spring Batch crea sus tablas de control:
+El JobRepository JDBC mantiene tablas de control en el mismo archivo:
 
 - `BATCH_JOB_INSTANCE`: instancia lógica de un Job.
 - `BATCH_JOB_EXECUTION`: intentos y estados.
@@ -84,7 +84,7 @@ En el mismo archivo SQLite, Spring Batch crea sus tablas de control:
 - `BATCH_STEP_EXECUTION`: estado y métricas por Step.
 - `BATCH_JOB_EXECUTION_CONTEXT` y `BATCH_STEP_EXECUTION_CONTEXT`: contexto necesario para controlar y reiniciar procesos.
 
-No son datos meteorológicos: son información operativa del framework.
+Estas tablas no contienen datos meteorológicos; conservan la información de control de Batch. La inicialización se habilita en `application.yml` con `spring.batch.jdbc.initialize-schema: always` y usa el script SQLite incluido en Spring Batch.
 
 ## Consultas SQL de ejemplo
 

@@ -9,14 +9,16 @@ El proyecto tiene un enfoque educativo: las clases principales incluyen comentar
 | Área | Tecnología |
 |---|---|
 | Backend | Java 25, Spring Boot 4.2.0, Spring Web MVC, Spring Data JPA, Hibernate |
-| Procesamiento | Spring Batch 6.1.0 y Spring Scheduling |
+| Procesamiento | Spring Batch 6.1.0 con JobRepository JDBC y Spring Scheduling |
 | Base de datos | SQLite (Xerial JDBC) |
 | Frontend | Angular 22, TypeScript 6, RxJS 7, Angular Router, HttpClient |
 | Mapa | Leaflet 1.9 |
 | Gráficas | Chart.js 4 |
 | Datos meteorológicos | Open-Meteo |
 
-Spring Boot 4.2 requiere Java 17 o superior y Maven 3.6.3 o posterior. Angular 22 es compatible con Node.js 22.22.3, 24.15 o 26; este proyecto documenta Node 26 LTS. Consulta las [versiones de Angular](https://angular.dev/reference/versions), [requisitos de Spring Boot](https://docs.spring.io/spring-boot/system-requirements.html) y la [documentación de Spring Batch](https://docs.spring.io/spring-batch/reference/index.html).
+Spring Boot 4.2.0 administra las versiones compatibles de Spring Batch 6.1.0 y Spring Data. Para persistir los metadatos de ejecución de Batch, el backend utiliza **`spring-boot-starter-batch-jdbc`**, no el starter Batch en memoria. Así las tablas `BATCH_*` se guardan en el mismo SQLite que las lecturas meteorológicas.
+
+Consulta las [versiones de Angular](https://angular.dev/reference/versions), los [requisitos de Spring Boot](https://docs.spring.io/spring-boot/system-requirements.html) y la [documentación de Spring Batch](https://docs.spring.io/spring-batch/reference/index.html).
 
 ## Requisitos previos
 
@@ -106,7 +108,7 @@ Scheduling decide cuándo se inicia la actualización. Batch define cómo se pro
 1. **Reader:** pagina las ciudades habilitadas.
 2. **Processor:** consulta Open-Meteo y transforma cada respuesta.
 3. **Writer:** inserta o actualiza una lectura.
-4. **JobRepository:** conserva los metadatos de ejecuciones y pasos.
+4. **JobRepository JDBC:** conserva instancias, parámetros, ejecuciones, pasos y contextos en tablas `BATCH_*` de SQLite.
 
 El endpoint `POST /api/weather/refresh` arranca el mismo Job manualmente. Ambos mecanismos comparten el procesamiento y la persistencia.
 
